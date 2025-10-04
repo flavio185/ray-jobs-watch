@@ -3,6 +3,7 @@ import time
 import requests
 import duckdb
 from datetime import datetime
+import json
 
 # --- Configuration from Environment Variables ---
 # The namespace is injected by the Kubernetes Downward API
@@ -15,6 +16,25 @@ DB_PATH = os.getenv("DUCKDB_PATH", "/app/database/ray_jobs.db")
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "60"))
 
 TERMINAL_STATES = {"SUCCEEDED", "FAILED", "STOPPED"}
+
+def clean_raw_logs(raw_logs: str) -> str:
+    """
+    Removes ANSI escape codes and other terminal formatting characters from a raw log string.
+    """
+    data = json.loads(raw_logs)
+    
+    # Step 2: Extract the raw log string from the dictionary
+    raw_log_string = data['logs']
+    
+    # Step 3: Replace the escaped characters to make it readable
+    # The string "\\n" becomes a newline character "\n"
+    # The string "\\t" becomes a tab character "\t"
+    human_readable_logs = raw_log_string.replace('\\n', '\n').replace('\\t', '\t')
+    
+    # Step 4: Print the final, cleaned-up logs
+    return human_readable_logs
+
+
 
 class RayJobManager:
     """Manages fetching, processing, and cleaning up RayJobs."""
@@ -65,8 +85,9 @@ class RayJobManager:
             # Adding a timeout is crucial for network requests
             response = requests.get(url, timeout=15)
             if response.status_code == 200:
-                # Clean logs for potential encoding issues
-                return response.text.encode("utf-8", "surrogateescape").decode("utf-8", "ignore")
+                raw_logs = response.text
+                cleaned_logs = clean_raw_logs(raw_logs)
+                return cleaned_logs
             else:
                 print(f"❌ Failed to fetch logs for {job_name} (Status {response.status_code}) from {url}")
                 return f"Failed to fetch logs. Status: {response.status_code}"
