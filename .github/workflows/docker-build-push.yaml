@@ -3,7 +3,7 @@ name: Docker Image CI on Release
 # This workflow now runs only when a new release is created in GitHub
 on:
   release:
-    types: [created]
+    types: [published]
 
 env:
   # Set your full Docker image repository name.
