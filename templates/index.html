@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Active Jobs{% endblock %}
+
+{% block content %}
+    <h1>Active Jobs</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Job Name</th>
+                <th>Status</th>
+                <th>Start Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td>{{ job[0] }}</td>
+                <td><span class="status {{ job[1]|lower }}">{{ job[1] }}</span></td>
+                <td>{{ job[3] }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">No active jobs found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

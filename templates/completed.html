@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Completed Jobs{% endblock %}
+
+{% block content %}
+    <h1>Completed & Archived Jobs</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Job Name</th>
+                <th>Status</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td><a href="{{ url_for('job_details', job_name=job[0]) }}">{{ job[0] }}</a></td>
+                <td><span class="status {{ job[1]|lower }}">{{ job[1] }}</span></td>
+                <td>{{ job[3] }}</td>
+                <td>{{ job[4] }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4">No completed jobs found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

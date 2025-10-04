@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Job Details: {{ job[0] }}{% endblock %}
+
+{% block content %}
+    <h1>Job: {{ job[0] }}</h1>
+    <div class="job-details">
+        <p><strong>Status:</strong> <span class="status {{ job[1]|lower }}">{{ job[1] }}</span></p>
+        <p><strong>Start Time:</strong> {{ job[3] }}</p>
+        <p><strong>End Time:</strong> {{ job[4] if job[4] else 'N/A' }}</p>
+    </div>
+
+    <h2>Logs</h2>
+    <div class="log-box">
+        <pre>{{ job[2] }}</pre>
+    </div>
+{% endblock %}
