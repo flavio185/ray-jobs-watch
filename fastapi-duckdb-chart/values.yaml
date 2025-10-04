@@ -1,0 +1,44 @@
+# Default values for fastapi-duckdb-chart.
+
+replicaCount: 1
+
+image:
+  # IMPORTANT: Change this to the image you built and pushed
+  repository: flavio185/fastapi-duckdb-app
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "0.1.6"
+
+service:
+  type: ClusterIP
+  port: 8000
+
+# Configuration for the application, will be mounted as environment variables
+config:
+  # The path inside the container where the PVC is mounted.
+  duckdbPath: "/app/database/ray_jobs.db"
+  # The internal cluster URL for the KubeRay API server
+  kuberayApiServer: "http://kuberay-apiserver-service.default.svc.cluster.local:8888"
+
+# Persistence configuration for the DuckDB database file
+persistence:
+  enabled: true
+  # The access mode for the persistent volume.
+  # ReadWriteOnce is suitable for a single-pod, file-based DB.
+  accessMode: ReadWriteOnce
+  # The size of the persistent volume
+  size: 1Gi
+  # If you have a specific StorageClass, specify it here.
+  # storageClassName: "your-storage-class"
+
+# Poller sidecar configuration
+poller:
+  enabled: true
+  # How often (in seconds) the sidecar polls for RayJob updates
+  intervalSeconds: 8
+
+# Security context to run the pod as a non-root user for better security
+securityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001

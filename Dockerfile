@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code into the container
-COPY . .
+COPY src/ .
 
 # The user and group 'appuser' will be created with UID/GID 1001
 RUN groupadd -r appuser && useradd --no-log-init -r -g appuser appuser

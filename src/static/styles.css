@@ -88,12 +88,12 @@ pre {
 .status {
     padding: 5px 10px;
     border-radius: 15px;
-    color: #2d2d2d;
+    color: white;
     font-weight: bold;
     font-size: 0.9em;
 }
 
 .status.running { background-color: #007bff; }
 .status.pending { background-color: #ffc107; color: #333; }
-.status.completed { background-color: #28a745; }
+.status.succeeded { background-color: #28a745; }
 .status.failed { background-color: #dc3545; }

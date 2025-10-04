@@ -22,7 +22,7 @@ Now, build and push this image to your container registry.
 
 ```bash
 # Replace 'your-registry' and 'your-repo' with your actual registry and repository name
-export IMAGE_NAME="flavio185/fastapi-duckdb-app:0.1.2"
+export IMAGE_NAME="flavio185/fastapi-duckdb-app:0.1.5"
 
 # Build the image
 podman build -t $IMAGE_NAME .
