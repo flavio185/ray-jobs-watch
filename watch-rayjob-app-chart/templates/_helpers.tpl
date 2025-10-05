@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "fastapi-duckdb-chart.name" -}}
+{{- define "watch-rayjob-app-chart.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "fastapi-duckdb-chart.fullname" -}}
+{{- define "watch-rayjob-app-chart.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "fastapi-duckdb-chart.chart" -}}
+{{- define "watch-rayjob-app-chart.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "fastapi-duckdb-chart.labels" -}}
-helm.sh/chart: {{ include "fastapi-duckdb-chart.chart" . }}
-{{ include "fastapi-duckdb-chart.selectorLabels" . }}
+{{- define "watch-rayjob-app-chart.labels" -}}
+helm.sh/chart: {{ include "watch-rayjob-app-chart.chart" . }}
+{{ include "watch-rayjob-app-chart.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,7 +45,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "fastapi-duckdb-chart.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "fastapi-duckdb-chart.name" . }}
+{{- define "watch-rayjob-app-chart.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "watch-rayjob-app-chart.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}

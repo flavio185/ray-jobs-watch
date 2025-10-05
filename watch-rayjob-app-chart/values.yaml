@@ -1,10 +1,10 @@
-# Default values for fastapi-duckdb-chart.
+# Default values for watch-rayjob-app-chart.
 
 replicaCount: 1
 
 image:
   # IMPORTANT: Change this to the image you built and pushed
-  repository: flavio185/fastapi-duckdb-app
+  repository: flavio185/watch-rayjob-app
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "0.1.6"
@@ -16,11 +16,11 @@ service:
 # Configuration for the application, will be mounted as environment variables
 config:
   # The path inside the container where the PVC is mounted.
-  duckdbPath: "/app/database/ray_jobs.db"
+  sqlitePath: "/app/database/ray_jobs.db"
   # The internal cluster URL for the KubeRay API server
   kuberayApiServer: "http://kuberay-apiserver-service.default.svc.cluster.local:8888"
 
-# Persistence configuration for the DuckDB database file
+# Persistence configuration for the SQLite database file
 persistence:
   enabled: true
   # The access mode for the persistent volume.

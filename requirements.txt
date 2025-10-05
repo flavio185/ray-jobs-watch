@@ -1,7 +1,6 @@
 # requirements.txt
 fastapi
 uvicorn[standard]
-duckdb
 jinja2
 python-dotenv
 requests

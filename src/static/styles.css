@@ -95,5 +95,7 @@ pre {
 
 .status.running { background-color: #007bff; }
 .status.pending { background-color: #ffc107; color: #333; }
+.status.unknown { background-color: #ffc107; color: #333; }
 .status.succeeded { background-color: #28a745; }
+.status.completed { background-color: #28a745; }
 .status.failed { background-color: #dc3545; }

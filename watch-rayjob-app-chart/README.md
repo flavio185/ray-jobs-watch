@@ -6,7 +6,7 @@
 Helm uses a standard directory structure. Create these files and directories:
 
 ```
-fastapi-duckdb-chart/
+watch-rayjob-app-chart/
 ├── Chart.yaml
 ├── values.yaml
 └── templates/
@@ -17,7 +17,7 @@ fastapi-duckdb-chart/
     └── service.yaml
 
 ```
-helm lint ./fastapi-duckdb-chart
+helm lint ./watch-rayjob-app-chart
 
 # Choose a namespace name, e.g., 'project-alpha'
 export NAMESPACE="app-ns"
@@ -27,10 +27,10 @@ kubectl create namespace $NAMESPACE
 
 # Install the chart into the namespace
 # helm install [RELEASE_NAME] [CHART_PATH] --namespace [NAMESPACE]
-helm install fastapi-app ./fastapi-duckdb-chart --namespace $NAMESPACE
+helm install fastapi-app ./watch-rayjob-app-chart --namespace $NAMESPACE
 
 If you needed to override a value (like the image repository), you would use the `--set` flag:
 ```bash
-helm install fastapi-app ./fastapi-duckdb-chart \
+helm install fastapi-app ./watch-rayjob-app-chart \
   --namespace $NAMESPACE \
   --set image.repository=my-docker-hub/my-cool-repo

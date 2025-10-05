@@ -7,7 +7,7 @@ on:
 
 env:
   # Set your full Docker image repository name.
-  IMAGE_REPO: flavio185/fastapi-duckdb-app
+  IMAGE_REPO: flavio185/fastapi-watch-rayjob-app
 
 jobs:
   build-and-push:

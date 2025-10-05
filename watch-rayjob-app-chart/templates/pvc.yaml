@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "fastapi-duckdb-chart.fullname" . }}-data
+  name: {{ include "watch-rayjob-app-chart.fullname" . }}-data
   labels:
-    {{- include "fastapi-duckdb-chart.labels" . | nindent 4 }}
+    {{- include "watch-rayjob-app-chart.labels" . | nindent 4 }}
 spec:
   accessModes:
     - {{ .Values.persistence.accessMode | quote }}

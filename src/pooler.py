@@ -1,39 +1,37 @@
 import os
 import time
 import requests
-import duckdb
-from datetime import datetime
+import sqlite3
+import re
 import json
 
 # --- Configuration from Environment Variables ---
-# The namespace is injected by the Kubernetes Downward API
 NAMESPACE = os.getenv("POD_NAMESPACE", "default")
-# The API server for KubeRay
 API_BASE = os.getenv("KUBERAY_API_SERVER", "http://kuberay-apiserver-service.default.svc.cluster.local:8888")
-# The path to the database on the shared persistent volume
-DB_PATH = os.getenv("DUCKDB_PATH", "/app/database/ray_jobs.db")
-# Polling interval in seconds
+DB_PATH = os.getenv("SQLITE_PATH", "/app/database/ray_jobs.db")
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "60"))
 
 TERMINAL_STATES = {"SUCCEEDED", "FAILED", "STOPPED"}
 
 def clean_raw_logs(raw_logs: str) -> str:
     """
-    Removes ANSI escape codes and other terminal formatting characters from a raw log string.
+    Cleans raw log output by first attempting to parse it as JSON (as Ray often returns),
+    and then stripping all ANSI/Unicode terminal formatting codes for clean display.
     """
-    data = json.loads(raw_logs)
-    
-    # Step 2: Extract the raw log string from the dictionary
-    raw_log_string = data['logs']
-    
-    # Step 3: Replace the escaped characters to make it readable
-    # The string "\\n" becomes a newline character "\n"
-    # The string "\\t" becomes a tab character "\t"
-    human_readable_logs = raw_log_string.replace('\\n', '\n').replace('\\t', '\t')
-    
-    # Step 4: Print the final, cleaned-up logs
-    return human_readable_logs
+    # 1. Try to parse as JSON, as the Ray dashboard API often wraps logs this way.
+    try:
+        data = json.loads(raw_logs)
+        log_content = data.get('logs', '')
+        # Unescape characters like \\n and \\t
+        log_content = log_content.encode().decode('unicode_escape')
+    except (json.JSONDecodeError, TypeError):
+        # If it's not JSON or not a string, process it as plain text.
+        log_content = raw_logs if isinstance(raw_logs, str) else "Log content is not in a readable format."
 
+    # 2. Use a regular expression to remove ANSI/Unicode control characters.
+    # This pattern matches escape sequences for colors, box drawing, etc.
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])|[\u2500-\u257F]+')
+    return ansi_escape.sub('', log_content)
 
 
 class RayJobManager:
@@ -44,20 +42,23 @@ class RayJobManager:
         self._init_db()
 
     def _init_db(self):
-        """Ensures the database and table exist."""
+        """Ensures the database and table exist and enables WAL mode."""
         print(f"Initializing database at {DB_PATH}...")
         os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-        conn = duckdb.connect(DB_PATH)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS ray_jobs (
-                job_name TEXT PRIMARY KEY,
-                status TEXT,
-                logs TEXT,
-                start_time TIMESTAMP,
-                end_time TIMESTAMP
-            )
-        """)
-        conn.close()
+        
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            # CRITICAL: Enable WAL mode for concurrent read/write.
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS ray_jobs (
+                    job_name TEXT PRIMARY KEY,
+                    status TEXT,
+                    logs TEXT,
+                    start_time TIMESTAMP,
+                    end_time TIMESTAMP
+                )
+            """)
         print("Database initialized successfully.")
 
     def get_all_jobs(self):
@@ -72,7 +73,7 @@ class RayJobManager:
             return []
 
     def get_job_logs(self, job_name, job_details):
-        """Fetches logs for a given job from the Ray Dashboard."""
+        """Fetches and cleans logs for a given job from the Ray Dashboard."""
         dashboard_url = job_details.get('dashboardURL')
         job_id = job_details.get('jobId')
         
@@ -82,12 +83,10 @@ class RayJobManager:
 
         url = f"http://{dashboard_url}/api/jobs/{job_id}/logs"
         try:
-            # Adding a timeout is crucial for network requests
             response = requests.get(url, timeout=15)
             if response.status_code == 200:
-                raw_logs = response.text
-                cleaned_logs = clean_raw_logs(raw_logs)
-                return cleaned_logs
+                # The cleaning function is now robust
+                return clean_raw_logs(response.text)
             else:
                 print(f"❌ Failed to fetch logs for {job_name} (Status {response.status_code}) from {url}")
                 return f"Failed to fetch logs. Status: {response.status_code}"
@@ -107,15 +106,18 @@ class RayJobManager:
         except requests.exceptions.RequestException as e:
             print(f"❌ Exception during job deletion for {job_name}: {e}")
 
-    def save_job_to_duckdb(self, job_name, status, logs, start_time, end_time):
-        """Saves or updates job information in the DuckDB database."""
+    def save_job_to_db(self, job_name, status, logs, start_time, end_time):
+        """Saves or updates job information in the SQLite database correctly."""
         try:
-            with duckdb.connect(DB_PATH) as conn:
-                conn.execute("""
+            # The 'with' statement handles commit and close automatically.
+            with sqlite3.connect(DB_PATH) as conn:
+                cursor = conn.cursor()
+                # Ensure WAL mode is active for every connection.
+                cursor.execute("PRAGMA journal_mode=WAL;")
+                cursor.execute("""
                     INSERT OR REPLACE INTO ray_jobs (job_name, status, logs, start_time, end_time) 
                     VALUES (?, ?, ?, ?, ?)
                 """, (job_name, status, logs, start_time, end_time))
-            # print(f"✅ Saved job '{job_name}' with status '{status}' to DB.")
         except Exception as e:
             print(f"❌ Database error for job {job_name}: {e}")
 
@@ -143,10 +145,10 @@ class RayJobManager:
             if status in TERMINAL_STATES:
                 print(f"📌 Job '{job_name}' is in terminal state: {status}. Fetching logs and cleaning up.")
                 logs = self.get_job_logs(job_name, job_status_details)
-                self.save_job_to_duckdb(job_name, status, logs, start_time, end_time)
+                self.save_job_to_db(job_name, status, logs, start_time, end_time)
                 self.delete_job(job_name)
-            else: # PENDING, RUNNING, etc.
-                self.save_job_to_duckdb(job_name, status, "Logs are available after job completion.", start_time, end_time)
+            else:
+                self.save_job_to_db(job_name, status, "Logs are available after job completion.", start_time, end_time)
 
 if __name__ == "__main__":
     manager = RayJobManager(NAMESPACE, API_BASE)
@@ -159,3 +161,4 @@ if __name__ == "__main__":
             print(f"🚨 An unexpected error occurred in the main loop: {e}")
         
         time.sleep(POLL_INTERVAL)
+
