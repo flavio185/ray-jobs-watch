@@ -4,10 +4,10 @@ replicaCount: 1
 
 image:
   # IMPORTANT: Change this to the image you built and pushed
-  repository: flavio185/watch-rayjob-app
+  repository: flavio185/fastapi-watch-rayjob-app
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "0.1.6"
+  tag: "0.2.0"
 
 service:
   type: ClusterIP
@@ -35,7 +35,7 @@ persistence:
 poller:
   enabled: true
   # How often (in seconds) the sidecar polls for RayJob updates
-  intervalSeconds: 8
+  intervalSeconds: 30
 
 # Security context to run the pod as a non-root user for better security
 securityContext:
